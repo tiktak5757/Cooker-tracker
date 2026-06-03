@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Cooker Tracker</title>
+<meta name="theme-color" content="#ff6b00">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cooker Tracker">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --card: #1c1c1c;
+    --border: #2a2a2a;
+    --accent: #ff6b00;
+    --accent2: #ffaa00;
+    --green: #00c853;
+    --red: #ff3d3d;
+    --text: #f0f0f0;
+    --muted: #888;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── PASSWORD SCREEN ── */
+  #lockScreen {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 1000;
+    gap: 24px;
+  }
+  #lockScreen h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    letter-spacing: 4px;
+    color: var(--accent);
+  }
+  #lockScreen p { color: var(--muted); font-size: 0.9rem; letter-spacing: 1px; }
+  .lock-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    width: 90%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .lock-box input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.1rem;
+    padding: 14px 16px;
+    text-align: center;
+    letter-spacing: 4px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .lock-box input:focus { border-color: var(--accent); }
+  .lock-box button {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 14px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: opacity 0.2s;
+  }
+  .lock-box button:hover { opacity: 0.85; }
+  #lockError { color: var(--red); font-size: 0.85rem; text-align: center; display: none; }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 3px;
+    color: var(--accent);
+  }
+  #monthBadge {
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    overflow-x: auto;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 14px 20px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── MAIN ── */
+  main { padding: 20px; max-width: 800px; margin: 0 auto; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── ADD FORM ── */
+  .add-form {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .add-form h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    color: var(--accent2);
+    margin-bottom: 16px;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .form-row.three { grid-template-columns: 2fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .form-group input, .form-group select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+  .form-group select option { background: var(--card); }
+
+  .profit-preview {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 0.95rem;
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  .btn-add {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 12px 28px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s;
+  }
+  .btn-add:hover { opacity: 0.85; }
+
+  /* ── SUMMARY CARDS ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-card .label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .stat-card .value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 1px;
+  }
+  .stat-card.profit .value { color: var(--green); }
+  .stat-card.cost .value { color: var(--accent2); }
+  .stat-card.count .value { color: var(--accent); }
+
+  /* ── ENTRIES TABLE ── */
+  .entries-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .entries-header h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+  .entry-count {
+    font-size: 0.8rem;
+    color: var(--muted);
+    background: var(--card);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .entry-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .entry-brand {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  .entry-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    flex-wrap: wrap;
+  }
+  .entry-meta span strong { color: var(--text); }
+  .entry-profit-tag {
+    background: rgba(0,200,83,0.12);
+    color: var(--green);
+    border: 1px solid rgba(0,200,83,0.25);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    white-space: nowrap;
+    margin-top: 6px;
+    display: inline-block;
+  }
+  .entry-profit-tag.loss {
+    background: rgba(255,61,61,0.12);
+    color: var(--red);
+    border-color: rgba(255,61,61,0.25);
+  }
+  .entry-actions { display: flex; gap: 8px; }
+  .btn-del {
+    background: rgba(255,61,61,0.1);
+    border: 1px solid rgba(255,61,61,0.2);
+    border-radius: 6px;
+    color: var(--red);
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-del:hover { background: rgba(255,61,61,0.2); }
+
+  .entry-date { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+  }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state p { font-size: 0.9rem; }
+
+  /* ── ARCHIVE TAB ── */
+  .archive-list { display: flex; flex-direction: column; gap: 10px; }
+  .archive-month-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .archive-month-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .archive-month-header:hover { background: var(--surface); }
+  .archive-month-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    color: var(--accent2);
+  }
+  .archive-month-summary {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .archive-chevron { color: var(--muted); transition: transform 0.2s; font-size: 1.2rem; }
+  .archive-month-card.open .archive-chevron { transform: rotate(180deg); }
+  .archive-entries { display: none; padding: 0 16px 16px; border-top: 1px solid var(--border); }
+  .archive-month-card.open .archive-entries { display: block; }
+
+  .archive-stat-row {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 8px;
+    margin: 12px 0;
+  }
+  .archive-stat {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+  .archive-stat .lbl { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .archive-stat .val { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; }
+
+  /* ── LOADING ── */
+  .loader {
+    text-align: center;
+    padding: 32px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* ── STATUS BAR ── */
+  #statusBar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 10px 24px;
+    border-radius: 30px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 999;
+    letter-spacing: 0.5px;
+  }
+  #statusBar.show { opacity: 1; }
+
+  /* ── MODAL CONFIRM ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 500;
+    display: none;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    max-width: 340px;
+    width: 90%;
+    text-align: center;
+  }
+  .modal-box h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 2px; margin-bottom: 10px; color: var(--accent); }
+  .modal-box p { font-size: 0.88rem; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btns button {
+    flex: 1; padding: 12px; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.2s;
+  }
+  .modal-btns button:hover { opacity: 0.85; }
+  .btn-cancel { background: var(--surface); color: var(--text); border: 1px solid var(--border) !important; }
+  .btn-confirm { background: var(--accent); color: #fff; }
+
+  @media (max-width: 500px) {
+    .form-row { grid-template-columns: 1fr; }
+    .form-row.three { grid-template-columns: 1fr 1fr; }
+    .summary-grid { grid-template-columns: repeat(3,1fr); }
+    .stat-card .value { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PASSWORD SCREEN -->
+<div id="lockScreen">
+  <h1>🔒 COOKER TRACKER</h1>
+  <p>ENTER PASSWORD TO CONTINUE</p>
+  <div class="lock-box">
+    <input type="password" id="pwInput" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPw()">
+    <button onclick="checkPw()">UNLOCK</button>
+    <div id="lockError">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
+
+  <header>
+    <h1>🔥 COOKER TRACKER</h1>
+    <span id="monthBadge">Loading...</span>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('current')">📦 This Month</button>
+    <button class="tab-btn" onclick="showTab('archive')">🗂️ Archive</button>
+  </div>
+
+  <main>
+
+    <!-- CURRENT MONTH TAB -->
+    <div id="tab-current" class="section active">
+
+      <!-- ADD FORM -->
+      <div class="add-form">
+        <h2>+ ADD COOKER</h2>
+        <div class="form-row three">
+          <div class="form-group">
+            <label>Brand / Model</label>
+            <input type="text" id="fBrand" placeholder="e.g. Hotpoint 60cm">
+          </div>
+          <div class="form-group">
+            <label>Cost Price (£)</label>
+            <input type="number" id="fCost" placeholder="0.00" step="0.01" oninput="updateProfit()">
+          </div>
+          <div class="form-group">
+            <label>Sell Price (£)</label>
+            <input type="number" id="fSell" placeholder="0.00" step="0.01" oninput="updateProfit()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Condition</label>
+            <select id="fCondition">
+              <option value="Used">Used</option>
+              <option value="New">New</option>
+              <option value="Refurbished">Refurbished</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Profit (auto)</label>
+            <div class="profit-preview" id="profitPreview">£0.00</div>
+          </div>
+        </div>
+        <button class="btn-add" onclick="addEntry()">ADD ENTRY</button>
+      </div>
+
+      <!-- SUMMARY -->
+      <div class="summary-grid">
+        <div class="stat-card count">
+          <div class="label">Items</div>
+          <div class="value" id="statCount">0</div>
+        </div>
+        <div class="stat-card cost">
+          <div class="label">Total Cost</div>
+          <div class="value" id="statCost">£0</div>
+        </div>
+        <div class="stat-card profit">
+          <div class="label">Total Profit</div>
+          <div class="value" id="statProfit">£0</div>
+        </div>
+      </div>
+
+      <!-- ENTRIES -->
+      <div class="entries-header">
+        <h2>ENTRIES</h2>
+        <span class="entry-count" id="entryCount">0 cookers</span>
+      </div>
+      <div id="entriesList"><div class="loader">Loading...</div></div>
+    </div>
+
+    <!-- ARCHIVE TAB -->
+    <div id="tab-archive" class="section">
+      <div id="archiveList"><div class="loader">Loading archives...</div></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- STATUS BAR -->
+<div id="statusBar"></div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <h3 id="modalTitle">CONFIRM</h3>
+    <p id="modalMsg"></p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm" id="modalConfirmBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, deleteDoc, doc,
+  onSnapshot, query, orderBy, getDocs, writeBatch, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ── FIREBASE CONFIG ── replace with your own project config
+const firebaseConfig = {
+  apiKey: "AIzaSyCUUEk0oEW_o_cRlKufON293gAg82TJAhs",
+  authDomain: "mo-cooker-tracker.firebaseapp.com",
+  projectId: "mo-cooker-tracker",
+  storageBucket: "mo-cooker-tracker.firebasestorage.app",
+  messagingSenderId: "1004687092025",
+  appId: "1:1004687092025:web:3f992337234ef5563aa0e8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ── HELPERS ──
+const APP_PW = "MO@WH";
+
+function getMonthKey(date) {
+  const d = date || new Date();
+  return d.toLocaleString('en-GB', { month: 'long', timeZone: 'Europe/London' })
+       + '-' + d.toLocaleString('en-GB', { year: 'numeric', timeZone: 'Europe/London' });
+}
+function getMonthLabel(date) {
+  const d = date || new Date();
+  return d.toLocaleString('en-GB', { month: 'long', year: 'numeric', timeZone: 'Europe/London' });
+}
+function fmt(n) { return '£' + parseFloat(n||0).toFixed(2); }
+function fmtShort(n) {
+  const v = parseFloat(n||0);
+  return v >= 1000 ? '£' + (v/1000).toFixed(1) + 'k' : '£' + v.toFixed(0);
+}
+
+// ── PASSWORD ──
+window.checkPw = function() {
+  const v = document.getElementById('pwInput').value;
+  if (v === APP_PW) {
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
+  } else {
+    document.getElementById('lockError').style.display = 'block';
+    document.getElementById('pwInput').value = '';
+  }
+};
+
+// ── TABS ──
+window.showTab = function(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'archive') loadArchive();
+};
+
+// ── PROFIT PREVIEW ──
+window.updateProfit = function() {
+  const cost = parseFloat(document.getElementById('fCost').value) || 0;
+  const sell = parseFloat(document.getElementById('fSell').value) || 0;
+  const profit = sell - cost;
+  const el = document.getElementById('profitPreview');
+  el.textContent = fmt(profit);
+  el.style.color = profit >= 0 ? 'var(--green)' : 'var(--red)';
+};
+
+// ── STATUS TOAST ──
+function toast(msg, color) {
+  const bar = document.getElementById('statusBar');
+  bar.textContent = msg;
+  bar.style.background = color || 'var(--accent)';
+  bar.classList.add('show');
+  setTimeout(() => bar.classList.remove('show'), 2500);
+}
+
+// ── MODAL ──
+let _modalCb = null;
+function confirmModal(title, msg, cb) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalMsg').textContent = msg;
+  _modalCb = cb;
+  document.getElementById('confirmModal').classList.add('show');
+  document.getElementById('modalConfirmBtn').onclick = () => { closeModal(); cb(); };
+}
+window.closeModal = function() {
+  document.getElementById('confirmModal').classList.remove('show');
+};
+
+// ── AUTO MONTH ARCHIVE CHECK ──
+async function checkAndArchiveMonth() {
+  const now = new Date();
+  const ukNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/London' }));
+  const currentMonthKey = getMonthKey(ukNow);
+
+  // Get last stored month key from Firestore meta
+  const metaRef = doc(db, 'meta', 'monthTracker');
+  let lastMonth = null;
+  try {
+    const { getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap = await getDoc(metaRef);
+    if (snap.exists()) lastMonth = snap.data().currentMonth;
+  } catch(e) {}
+
+  if (lastMonth && lastMonth !== currentMonthKey) {
+    // Month has changed — archive old month
+    await archiveMonth(lastMonth);
+  }
+
+  // Update meta with current month
+  try {
+    const { setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    await setDoc(metaRef, { currentMonth: currentMonthKey });
+  } catch(e) {}
+
+  return currentMonthKey;
+}
+
+async function archiveMonth(monthKey) {
+  // Copy all entries from 'entries' into 'archive/monthKey/entries'
+  const entriesSnap = await getDocs(collection(db, 'entries'));
+  if (entriesSnap.empty) return;
+
+  const batch = writeBatch(db);
+  entriesSnap.docs.forEach(d => {
+    const archRef = doc(collection(db, 'archive', monthKey, 'entries'));
+    batch.set(archRef, d.data());
+    batch.delete(d.ref);
+  });
+  await batch.commit();
+  toast('📂 ' + monthKey + ' archived!', 'var(--accent2)');
+}
+
+// ── INIT APP ──
+async function initApp() {
+  const currentMonthKey = await checkAndArchiveMonth();
+
+  // Update badge
+  document.getElementById('monthBadge').textContent = getMonthLabel(new Date());
+
+  // Live listener
+  const q = query(collection(db, 'entries'), orderBy('createdAt', 'desc'));
+  onSnapshot(q, (snap) => {
+    renderEntries(snap.docs);
+  });
+
+  // Midnight UK timer
+  scheduleMidnightCheck();
+}
+
+function scheduleMidnightCheck() {
+  const now = new Date();
+  const ukNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/London' }));
+  const tomorrow = new Date(ukNow);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 1, 0, 0); // 00:01 UK
+  const msUntilMidnight = tomorrow - ukNow;
+  setTimeout(async () => {
+    await checkAndArchiveMonth();
+    document.getElementById('monthBadge').textContent = getMonthLabel(new Date());
+    scheduleMidnightCheck(); // reschedule
+  }, msUntilMidnight);
+}
+
+// ── RENDER ENTRIES ──
+function renderEntries(docs) {
+  const list = document.getElementById('entriesList');
+  if (docs.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">📦</div><p>No cookers added yet this month.<br>Add your first entry above.</p></div>';
+    updateStats([]);
+    return;
+  }
+
+  const entries = docs.map(d => ({ id: d.id, ...d.data() }));
+  updateStats(entries);
+
+  list.innerHTML = entries.map(e => {
+    const profit = (parseFloat(e.sellPrice)||0) - (parseFloat(e.costPrice)||0);
+    const isLoss = profit < 0;
+    const dateStr = e.createdAt ? new Date(e.createdAt.seconds * 1000).toLocaleDateString('en-GB') : 'Today';
+    return `
+      <div class="entry-card">
+        <div>
+          <div class="entry-brand">${escHtml(e.brand)}</div>
+          <div class="entry-date">${dateStr} · ${escHtml(e.condition||'')}</div>
+          <div class="entry-meta">
+            <span>Cost: <strong>${fmt(e.costPrice)}</strong></span>
+            <span>Sell: <strong>${fmt(e.sellPrice)}</strong></span>
+          </div>
+          <span class="entry-profit-tag ${isLoss?'loss':''}">${isLoss?'▼ Loss':'▲ Profit'} ${fmt(profit)}</span>
+        </div>
+        <div class="entry-actions">
+          <button class="btn-del" onclick="window.delEntry('${e.id}')">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('entryCount').textContent = docs.length + ' cooker' + (docs.length !== 1 ? 's' : '');
+}
+
+function updateStats(entries) {
+  const count = entries.length;
+  const totalCost = entries.reduce((s, e) => s + (parseFloat(e.costPrice)||0), 0);
+  const totalSell = entries.reduce((s, e) => s + (parseFloat(e.sellPrice)||0), 0);
+  const totalProfit = totalSell - totalCost;
+  document.getElementById('statCount').textContent = count;
+  document.getElementById('statCost').textContent = fmtShort(totalCost);
+  document.getElementById('statProfit').textContent = fmtShort(totalProfit);
+  document.getElementById('statProfit').style.color = totalProfit >= 0 ? 'var(--green)' : 'var(--red)';
+}
+
+// ── ADD ENTRY ──
+window.addEntry = async function() {
+  const brand = document.getElementById('fBrand').value.trim();
+  const cost = parseFloat(document.getElementById('fCost').value);
+  const sell = parseFloat(document.getElementById('fSell').value);
+  const condition = document.getElementById('fCondition').value;
+
+  if (!brand) { toast('Enter a brand/model name', 'var(--red)'); return; }
+  if (isNaN(cost) || isNaN(sell)) { toast('Enter valid prices', 'var(--red)'); return; }
+
+  try {
+    await addDoc(collection(db, 'entries'), {
+      brand, costPrice: cost, sellPrice: sell, condition,
+      profit: sell - cost,
+      createdAt: serverTimestamp()
+    });
+    document.getElementById('fBrand').value = '';
+    document.getElementById('fCost').value = '';
+    document.getElementById('fSell').value = '';
+    document.getElementById('fCondition').value = 'Used';
+    document.getElementById('profitPreview').textContent = '£0.00';
+    document.getElementById('profitPreview').style.color = 'var(--green)';
+    toast('✅ Cooker added!');
+  } catch(e) {
+    toast('Error saving. Check Firebase config.', 'var(--red)');
+    console.error(e);
+  }
+};
+
+// ── DELETE ──
+window.delEntry = function(id) {
+  confirmModal('DELETE ENTRY', 'Are you sure you want to delete this cooker entry? This cannot be undone.', async () => {
+    try {
+      await deleteDoc(doc(db, 'entries', id));
+      toast('Deleted', 'var(--red)');
+    } catch(e) { toast('Error deleting', 'var(--red)'); }
+  });
+};
+
+// ── LOAD ARCHIVE ──
+async function loadArchive() {
+  const list = document.getElementById('archiveList');
+  list.innerHTML = '<div class="loader">Loading archives...</div>';
+
+  try {
+    // List all archive months
+    const { getDocs: gd, collection: col } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const archSnap = await getDocs(collection(db, 'archive'));
+
+    if (archSnap.empty) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">🗂️</div><p>No archived months yet.<br>Archives appear here at end of each month.</p></div>';
+      return;
+    }
+
+    // Sort months newest first
+    const months = archSnap.docs.map(d => d.id).sort((a, b) => {
+      const parse = s => { const [m, y] = s.split('-'); return new Date('1 ' + m + ' ' + y); };
+      return parse(b) - parse(a);
+    });
+
+    list.innerHTML = '<div class="archive-list">' + months.map(m => `
+      <div class="archive-month-card" id="arc-${m}">
+        <div class="archive-month-header" onclick="window.toggleArchiveMonth('${m}')">
+          <div>
+            <div class="archive-month-name">${m.replace('-', ' ')}</div>
+            <div class="archive-month-summary" id="arc-summary-${m}">Tap to expand</div>
+          </div>
+          <span class="archive-chevron">▼</span>
+        </div>
+        <div class="archive-entries" id="arc-entries-${m}">
+          <div class="loader">Loading...</div>
+        </div>
+      </div>`).join('') + '</div>';
+
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state"><p>Error loading archives.</p></div>';
+    console.error(e);
+  }
+}
+
+window.toggleArchiveMonth = async function(monthKey) {
+  const card = document.getElementById('arc-' + monthKey);
+  const isOpen = card.classList.contains('open');
+  card.classList.toggle('open', !isOpen);
+  if (!isOpen) {
+    await loadArchiveMonth(monthKey);
+  }
+};
+
+async function loadArchiveMonth(monthKey) {
+  const container = document.getElementById('arc-entries-' + monthKey);
+  const summary = document.getElementById('arc-summary-' + monthKey);
+
+  try {
+    const snap = await getDocs(collection(db, 'archive', monthKey, 'entries'));
+    const entries = snap.docs.map(d => d.data());
+
+    const totalCost = entries.reduce((s, e) => s + (parseFloat(e.costPrice)||0), 0);
+    const totalSell = entries.reduce((s, e) => s + (parseFloat(e.sellPrice)||0), 0);
+    const totalProfit = totalSell - totalCost;
+
+    summary.textContent = `${entries.length} cookers · Profit: ${fmt(totalProfit)}`;
+
+    container.innerHTML = `
+      <div class="archive-stat-row">
+        <div class="archive-stat"><div class="lbl">Items</div><div class="val" style="color:var(--accent)">${entries.length}</div></div>
+        <div class="archive-stat"><div class="lbl">Cost</div><div class="val" style="color:var(--accent2)">${fmtShort(totalCost)}</div></div>
+        <div class="archive-stat"><div class="lbl">Profit</div><div class="val" style="color:${totalProfit>=0?'var(--green)':'var(--red)'}">${fmtShort(totalProfit)}</div></div>
+      </div>
+      ${entries.length === 0 ? '<p style="color:var(--muted);text-align:center;font-size:0.85rem;padding:12px">No entries</p>' :
+        entries.map(e => {
+          const profit = (parseFloat(e.sellPrice)||0) - (parseFloat(e.costPrice)||0);
+          const isLoss = profit < 0;
+          return `<div class="entry-card" style="margin-top:8px">
+            <div>
+              <div class="entry-brand">${escHtml(e.brand||'')}</div>
+              <div class="entry-meta">
+                <span>Cost: <strong>${fmt(e.costPrice)}</strong></span>
+                <span>Sell: <strong>${fmt(e.sellPrice)}</strong></span>
+                <span>${escHtml(e.condition||'')}</span>
+              </div>
+              <span class="entry-profit-tag ${isLoss?'loss':''}">${isLoss?'▼ Loss':'▲ Profit'} ${fmt(profit)}</span>
+            </div>
+          </div>`;
+        }).join('')
+      }`;
+  } catch(e) {
+    container.innerHTML = '<p style="color:var(--red);padding:12px">Error loading entries</p>';
+    console.error(e);
+  }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+</script>
+</body>
+</html>
+
+<!-- PWA -->
+<script>
+const manifestData = {
+  name: "Cooker Tracker", short_name: "Cookers",
+  start_url: "./", display: "standalone",
+  background_color: "#0a0a0a", theme_color: "#ff6b00",
+  icons: [{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%23ff6b00'/%3E%3Ctext x='96' y='130' font-size='100' text-anchor='middle'%3E%F0%9F%94%A5%3C/text%3E%3C/svg%3E",sizes:"192x192",type:"image/svg+xml"}]
+};
+const blob = new Blob([JSON.stringify(manifestData)],{type:'application/json'});
+const link = document.createElement('link');
+link.rel='manifest'; link.href=URL.createObjectURL(blob);
+document.head.appendChild(link);
+
+if('serviceWorker' in navigator){
+  const sw=`const CACHE='cooker-v1';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('fetch',e=>{if(e.request.url.includes('firebase')||e.request.url.includes('google'))return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;
+  const swBlob=new Blob([sw],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+}
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault(); deferredPrompt=e;
+  const b=document.createElement('div');
+  b.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#ff6b00;color:#fff;padding:12px 24px;border-radius:30px;font-family:DM Sans,sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer;z-index:998;box-shadow:0 4px 20px rgba(255,107,0,0.4);white-space:nowrap;';
+  b.textContent='📲 Install App on Home Screen';
+  b.onclick=()=>{deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>b.remove());};
+  document.body.appendChild(b);
+  setTimeout(()=>{if(b.parentNode)b.remove();},10000);
+});
+</script>
